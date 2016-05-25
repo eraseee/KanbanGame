@@ -6,16 +6,19 @@ public class DiceGenerator : MonoBehaviour {
 
     public Texture[] textures;
     Transform diceToRoll;
-    List<Transform> TEST;
-    List<Dice> ana;
+    List<Transform> dice;
+    CycleSystem cycle;
+
+    int totalDiceRoll;
+    DiceCalculator calc;
+
+
 
     // Use this for initialization
     void Start () {
-        ana = new List<Dice>();
-        TEST = new List<Transform>();
-        List<Dice> dev = new List<Dice>();
-        List<Dice> test = new List<Dice>();
-        List<Dice> deploy = new List<Dice>();
+        dice = new List<Transform>();
+        cycle = GameObject.Find("CycleSystem").GetComponent<CycleSystem>();
+        totalDiceRoll = 0;
     }
 	
     
@@ -29,27 +32,68 @@ public class DiceGenerator : MonoBehaviour {
     // Handler for generating the new numbers and the acquiring the new textures for the dice.
 
     public void startGenerator()
-    {
-        print("DiceGenerator called");
-        /* Generator, looks for all elements under each category, e.g. dice_assing -> Analysis -> Dice_ana + others assigned to this category.
-         * WORK RELATED NEEDS TO BE DELETED AFTER COMPLETION:
-         * Test for one category and it should work for all categories, Assignment and the category used for the call will be determined by the round system.
-         * 
-         * Assignment system will be worked on after round system, to make sure this system works before advancing it to handle assignments in different categories.
-         *  
-         */
-        // if(cycle == analysis) { for(int i = 0; i<gameObject.transform.childCount; i++){
-        for (int i = 0; i < gameObject.transform.GetChild(0).childCount; i++)
+    { 
+        // Handles each state of the game seperatly, depending on what cycle is active.
+        if (cycle.stateAna)
         {
-            print("number of children: " + gameObject.transform.GetChild(0).childCount);
-            diceToRoll = this.gameObject.transform.GetChild(i);
-            TEST.Add(diceToRoll.transform.GetChild(i));
-            Dice TESTING = TEST[i].gameObject.GetComponent<Dice>();
-            int roll = randomGenerator();
-            TESTING.numberChange(textures[roll - 1]);
-            TEST.Clear();
+            calc = GameObject.FindWithTag("Analyse").GetComponent<DiceCalculator>();
+            for (int i = 0; i < GameObject.FindWithTag("AnalyseDice").transform.childCount; i++)
+            {
+                diceToRoll = GameObject.FindWithTag("AnalyseDice").transform.GetChild(i);
+                dice.Add(diceToRoll);
+                Dice TESTING = dice[i].gameObject.GetComponent<Dice>();
+                int roll = randomGenerator();
+                TESTING.numberChange(textures[roll - 1]);
+            }
+            calc.anaCalc(totalDiceRoll);
+            totalDiceRoll = 0;
+            dice.Clear();
         }
-        //} }
+        if (cycle.stateDev)
+        {
+            for (int i = 0; i < GameObject.FindWithTag("DevDice").transform.childCount; i++)
+            {
+                diceToRoll = GameObject.FindWithTag("DevDice").transform.GetChild(i);
+                dice.Add(diceToRoll);
+                Dice TESTING = dice[i].gameObject.GetComponent<Dice>();
+                int roll = randomGenerator();
+                TESTING.numberChange(textures[roll - 1]);
+            }
+            calc.devCalc(totalDiceRoll);
+            totalDiceRoll = 0;
+            dice.Clear();
+        }
+        if (cycle.stateDeploy)
+        {
+            for (int i = 0; i < GameObject.FindWithTag("DeployDice").transform.childCount; i++)
+            {
+                diceToRoll = GameObject.FindWithTag("DeployDice").transform.GetChild(i);
+                dice.Add(diceToRoll);
+                Dice TESTING = dice[i].gameObject.GetComponent<Dice>();
+                int roll = randomGenerator();
+                TESTING.numberChange(textures[roll - 1]);
+            }
+            calc.deployCalc(totalDiceRoll);
+            totalDiceRoll = 0;
+            dice.Clear();
+        }
+        if (cycle.stateTest)
+        {
+            for (int i = 0; i < GameObject.FindWithTag("TestDice").transform.childCount; i++)
+            {
+                diceToRoll = GameObject.FindWithTag("TestDice").transform.GetChild(i);
+                dice.Add(diceToRoll);
+                Dice TESTING = dice[i].gameObject.GetComponent<Dice>();
+                int roll = randomGenerator();
+                TESTING.numberChange(textures[roll - 1]);
+            }
+            calc.testCalc(totalDiceRoll);
+            totalDiceRoll = 0;
+            dice.Clear();
+        }
+
+        toggleScript();
+
     }
 
     // Generates a random number between 1 and 6.
@@ -57,8 +101,17 @@ public class DiceGenerator : MonoBehaviour {
     {
         float rng =  Random.Range(2, 18);
         int tmp = Mathf.CeilToInt(rng / 3);
-        print(tmp);
+        totalDiceRoll += tmp;
+        //print(tmp);
         return tmp;
+
+    }
+
+
+
+    public void toggleScript()
+    {
+        this.gameObject.GetComponent<DiceCalculator>().enabled = !this.gameObject.GetComponent<DiceCalculator>().enabled;
     }
 
 
